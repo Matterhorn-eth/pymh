@@ -83,40 +83,49 @@ freesurfacebcdict = {
 
 ibcdict = {
     'type': ['rigidboundary'],
+    'sinj_locations': ['sinj_locations.txt'],
+    'srec_locations': ['srec_locations.txt'],
+    'greensfunction_filelist_mono': ['GF_mono_file_list'],
+    'greensfunction_filelist_di': ['GF_di_file_list']
+    }
+
+ibcextradict = {
     'inj': {},
     'rec': {},
     'ngpts': [3],
     }
 
-ibcdict['inj'] = {
+ibcextradict['inj'] = {
     'origin': [400, 0, 300],
-    'ncells': [101, 1, 75]
+    'ncells': [101, 1, 75],
+    'cell_size': griddict['cell_size']
     }
 
-ibcdict['rec'] = {
+ibcextradict['rec'] = {
     'origin': [
-        ibcdict['inj']['origin'][i] +
-        ibcdict['ngpts'][0]*griddict['cell_size'][i] for i in range(3)
+        ibcextradict['inj']['origin'][i] +
+        ibcextradict['ngpts'][0]*griddict['cell_size'][i] for i in range(3)
         ],
     'ncells': [
-        ibcdict['inj']['ncells'][i] -
-        2*ibcdict['ngpts'][0] for i in range(3)
+        ibcextradict['inj']['ncells'][i] -
+        2*ibcextradict['ngpts'][0] for i in range(3)
         ],
+    'cell_size': griddict['cell_size']
     }
 
 injectiondict = {
     'ngpts': [10],
     'origin': [],
-    'ncells': [],
+    'ncells': []
     }
 
 injectiondict['origin'] = [
-    ibcdict['inj']['origin'][i] -
+    ibcextradict['inj']['origin'][i] -
     (injectiondict['ngpts'][0])*griddict['cell_size'][i] for i in range(3)
     ]
 
 injectiondict['ncells'] = [
-    ibcdict['inj']['ncells'][i] +
+    ibcextradict['inj']['ncells'][i] +
     2*injectiondict['ngpts'][0] for i in range(3)
     ]
 
@@ -173,6 +182,7 @@ class GridParam(BaseParam):
         for key in kwargs:
             self.parameters.update(kwargs)
 
+
 class DecompositionParam(BaseParam):
     """ Class for describing decomposition parameters in `Matterhorn`.
 
@@ -185,6 +195,7 @@ class DecompositionParam(BaseParam):
         for key in kwargs:
             self.parameters.update(kwargs)
 
+
 class TimeParam(BaseParam):
     """ Class for describing time parameters in `Matterhorn`.
 
@@ -196,6 +207,7 @@ class TimeParam(BaseParam):
         self.parameters = timedict.copy()
         for key in kwargs:
             self.parameters.update(kwargs)
+
 
 class ModelParam(BaseParam):
     """ Class for describing model parameters in `Matterhorn`.
@@ -221,6 +233,7 @@ class SimulationParam(BaseParam):
         self.parameters = simulationdict.copy()
         for key in kwargs:
             self.parameters.update(kwargs)
+
 
 class BCParam(BaseParam):
     """ Class for describing boundary conditions parameters in `Matterhorn`.
@@ -248,10 +261,14 @@ class IBCParam(BaseParam):
 
     type = 'ibc'
 
-    def __init__(self, **kwargs):
+    def __init__(self, bc, **kwargs):
+        self.bc = bc
         self.parameters = ibcdict.copy()
+        self.extraparameters = ibcextradict.copy()
+        self.parameters['type'] = [bc]
         for key in kwargs:
             self.parameters.update(kwargs)
+
 
 class InjectionParam(BaseParam):
     """ Class for describing injection parameters in `Matterhorn`.
@@ -265,6 +282,7 @@ class InjectionParam(BaseParam):
         for key in kwargs:
             self.parameters.update(kwargs)
 
+
 class InputParam(BaseParam):
     """ Class for describing input parameters in `Matterhorn`.
 
@@ -277,11 +295,12 @@ class InputParam(BaseParam):
         for key in kwargs:
             self.parameters.update(kwargs)
 
+
 class OutputParam(BaseParam):
     """ Class for describing output parameters in `Matterhorn`.
 
     """
-    
+
     type = 'output'
 
     def __init__(self, output, **kwargs):
@@ -303,7 +322,80 @@ class OutputParam(BaseParam):
         for key in kwargs:
             self.parameters.update(kwargs)
 
-# %%
+
+# %% Locations
+class Locations(object):
+    """ Base class for describing locations in `Matterhorn`.
+
+    """
+
+    # self.dim = len(configs)
+
+    def __init__(self):
+        self.locations = []
+        self.nfaces = 4
+
+        print '2D only!'
+
+    def rectangle(self, **kwargs):
+        self.origin = kwargs['origin']
+        self.number_of_cells = kwargs['number_of_cells']
+        self.cell_size = kwargs['cell_size']
+
+        facedict = {0: (self.origin[0],
+                        self.number_of_cells[2],
+                        self.origin[2],
+                        self.cell_size[2],
+                        (0, 0, 1)),
+                    1: (self.origin[0] + (self.number_of_cells[0] - 1)*self.cell_size[0],
+                        self.number_of_cells[2],
+                        self.origin[2],
+                        self.cell_size[2],
+                        (0, 0, 1)),
+                    2: (self.origin[0],
+                        self.number_of_cells[0],
+                        self.origin[2],
+                        self.cell_size[0],
+                        (1, 0, 0)),
+                    3: (self.origin[0],
+                        self.number_of_cells[0],
+                        self.origin[2] + (self.number_of_cells[2] - 1)*self.cell_size[2],
+                        self.cell_size[0],
+                        (1, 0, 0))
+                    }
+
+        for face in range(self.nfaces):
+            for i in range(facedict[face][1]):
+#                for j in range(self.number_of_cells[1]):
+#                    y_emt = self.origin[1] + j*self.cell_size[1]
+                    if i == 0 or i == (facedict[face][1] - 1):
+                        # Corner
+                        flag = face + 6
+                    else:
+                        # Edge (no corner)
+                        flag = face
+                    self.locations.append((facedict[face][0] + 
+                                           facedict[face][4][0]*i*facedict[face][3],
+                                           0,
+                                           facedict[face][2] +
+                                           facedict[face][4][2]*i*facedict[face][3],
+                                           flag))
+
+    def write(self, filename, path=os.curdir):
+        """ Write section to file """
+
+        self.file = open('/'.join([path, filename]), 'w')
+
+        for loc in self.locations:
+            # filename.writelines('{} {}\n'.format(k,v)
+            # for k, v in self.parameters.items())
+            values = ' '.join(str(i) for i in loc)
+            print values
+            self.file.write('{}\n'.format(values))
+        self.file.close()
+
+
+# %% Directories
 class DirParam(object):
     """
     Class for creating the directory tree for
