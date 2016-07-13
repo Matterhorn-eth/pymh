@@ -54,7 +54,7 @@ simulationdict = {
     'type': ['acoustic_2d'],
     'order_time_operator': [2],
     'spatial_operator': ['taylor_2'],
-    'freesurface': [True]
+    'freesurface': [False]
     }
 
 pmlbcdict = {
@@ -374,7 +374,7 @@ class Locations(object):
                     else:
                         # Edge (no corner)
                         flag = face
-                    self.locations.append((facedict[face][0] + 
+                    self.locations.append((facedict[face][0] +
                                            facedict[face][4][0]*i*facedict[face][3],
                                            0,
                                            facedict[face][2] +
@@ -451,4 +451,4 @@ class DirParam(object):
 #        return self.collect('length')
 
 
-        
+

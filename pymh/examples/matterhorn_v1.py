@@ -13,7 +13,8 @@ import os
 
 sys.dont_write_bytecode = True
 
-pymhfolder = '/w04d2/bfilippo/pymh'
+# pymhfolder = '/w04d2/bfilippo/pymh'
+pymhfolder = '/Users/filippo/work/pymh'
 sys.path.insert(0, pymhfolder)
 
 import pymh
@@ -24,52 +25,48 @@ from pymh.sim.simulations import \
     BasicSim
 from pymh.utils.utils import \
     isPinRectangle
-    
+
 
 reload(pymh.param.parameters)
 
 if __name__ == '__main__':
 
-    # -------------------------------------------------------------------------
-    # Create directory structure
-    # -------------------------------------------------------------------------
+# %% ----------------------------------------------------------------------
+# Create directory structure
+# -------------------------------------------------------------------------
     Dir = DirParam()
     Dir.makedirs()
 
-    # -------------------------------------------------------------------------
-    # Full
-    # -------------------------------------------------------------------------
+# %% ----------------------------------------------------------------------
+# Initialize parameters
+# -------------------------------------------------------------------------
 
-    # Initialize parameters
-    Grid = GridParam()
-    Decomposition = DecompositionParam()
+    # Common
     Time = TimeParam()
-    Model = ModelParam(filename_prefix=['model_full'])
-    Simulation = SimulationParam()
     BC = BCParam('pml')
-    Simulation.parameters.update(BC.parameters)
-    Input = []
-    Input.append(InputParam())
-    Output = []
-    Output.append(OutputParam('shot_gather',
+
+    # Full
+    FullGrid = GridParam()
+    FullDecomposition = DecompositionParam()
+    FullModel = ModelParam(filename_prefix=['model_full'])
+    FullSimulation = SimulationParam(freesurface=[True])
+    FullSimulation.parameters.update(BC.parameters)
+    FullInput = InputParam()
+    FullOutput = []
+    FullOutput.append(OutputParam('shot_gather',
                               receiver_origin=[0, 0, 40],
                               timestep_increment=[1]))
-    Output.append(OutputParam('slice'))
+    FullOutput.append(OutputParam('slice'))
 
-    fullfilename = 'full.txt'
-
-    Full = BasicSim(Grid,
-                    Decomposition,
-                    Time,
-                    Model,
-                    Simulation,
-                    Input,
-                    Output)
-
-    Full.create(fullfilename)
-
-# %% Locations
+    # IBC
     IBC = IBCParam('freesurface')
+
+    # Injection
+
+# %% ----------------------------------------------------------------------
+# Locations
+# -------------------------------------------------------------------------
+
     SinjLocations = Locations()
     SinjLocations.rectangle(origin=IBC.extraparameters['inj']['origin'],
                             number_of_cells=IBC.extraparameters['inj']['ncells'],
@@ -86,17 +83,41 @@ if __name__ == '__main__':
     sreclocationsfilename = 'srec_locations.txt'
     SrecLocations.write(sreclocationsfilename)
 
-# %%
+# %% ----------------------------------------------------------------------
+# Is source outside or inside?
+# -------------------------------------------------------------------------
+
     corners = []
     for loc in SrecLocations.locations:
-        if loc[3] in range(6,10): corners.append(loc[:3])
-    corners = corners[:2] + corners[3:1:-1]
+        if loc[3]//6 == 1: corners.append(loc[:3])
+    corners = [corners[i] for i in [0, 1, 3, 2]]
     print corners
-    
-# %%    
 
-    a = isPinRectangle(corners, [500, 0, 1400])
-    print a
+    IBC.extraparameters['source_inside'] = \
+        isPinRectangle(corners, FullInput.parameters['location'])
+
+
+
+
+# %% ----------------------------------------------------------------------
+# Create files
+# -------------------------------------------------------------------------
+
+    if IBC.extraparameters['source_inside'] =
+    FullOutput.append(OutputParam('shot_gather',
+                              receiver_origin=[0, 0, 40],
+                              timestep_increment=[1]))
+    fullfilename = 'full.txt'
+
+    Full = BasicSim(FullGrid,
+                    FullDecomposition,
+                    Time,
+                    FullModel,
+                    FullSimulation,
+                    FullInput,
+                    FullOutput)
+
+    Full.create(fullfilename)
 
 # %%
     # subprocess.call(['matterhorn', fullfilename])
