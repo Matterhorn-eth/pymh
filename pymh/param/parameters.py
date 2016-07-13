@@ -18,8 +18,8 @@ filedict = {
 dirdict = {
     'ref': ['REF_simulation'],
     'inj': ['INJ_simulation'],
-    'ebc': ['EBC_simulation'],
-    'ebc_gf': ['EBC_simulation/GF_files']
+    'ibc': ['IBC_simulation'],
+    'ibc_gf': ['IBC_simulation/GF_files']
     }
 
 userdict = {
@@ -90,6 +90,7 @@ ibcdict = {
     }
 
 ibcextradict = {
+    'extrap': [False],
     'inj': {},
     'rec': {},
     'ngpts': [3],
@@ -114,19 +115,26 @@ ibcextradict['rec'] = {
     }
 
 injectiondict = {
+    'method': ['mps'],
+    'injection_locations': ['sinj_locations.txt'],
+    'injection_filelist_mono': ['injection_mono_file_list'],
+    'injection_filelist_di': ['injection_di_file_list']
+    }
+
+injectionextradict = {
     'ngpts': [10],
     'origin': [],
     'ncells': []
     }
 
-injectiondict['origin'] = [
+injectionextradict['origin'] = [
     ibcextradict['inj']['origin'][i] -
-    (injectiondict['ngpts'][0])*griddict['cell_size'][i] for i in range(3)
+    (injectionextradict['ngpts'][0])*griddict['cell_size'][i] for i in range(3)
     ]
 
-injectiondict['ncells'] = [
+injectionextradict['ncells'] = [
     ibcextradict['inj']['ncells'][i] +
-    2*injectiondict['ngpts'][0] for i in range(3)
+    2*injectionextradict['ngpts'][0] for i in range(3)
     ]
 
 inputdict = {
@@ -141,7 +149,7 @@ inputdict = {
 
 outputdict = {
     'attribute': ['S00XX'],
-    'timestep_increment': [50],
+    'timestep_increment': [1],
     'start_timestep': [0],
     'end_timestep': [timedict['number_of_timesteps'][0] - 1],
     'filename_prefix': ['output']
@@ -261,7 +269,7 @@ class IBCParam(BaseParam):
 
     type = 'ibc'
 
-    def __init__(self, bc, **kwargs):
+    def __init__(self, bc='freesurface', **kwargs):
         self.bc = bc
         self.parameters = ibcdict.copy()
         self.extraparameters = ibcextradict.copy()
@@ -277,8 +285,10 @@ class InjectionParam(BaseParam):
 
     type = 'injection'
 
-    def __init__(self, **kwargs):
+    def __init__(self, method='mps', **kwargs):
         self.parameters = injectiondict.copy()
+        self.extraparameters = injectionextradict.copy()
+        self.parameters['method'] = [method]
         for key in kwargs:
             self.parameters.update(kwargs)
 
