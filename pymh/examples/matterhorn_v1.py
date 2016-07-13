@@ -269,6 +269,7 @@ if __name__ == '__main__':
 
             gf_fn = 'GF_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
             gf_extrap_fn = 'GF_extrap_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
+            gf_extrap_fn2 = 'extrap_GF_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
 
             GFOutput[0].parameters['filename_prefix'] = [gf_fn]
             GFOutput[1].parameters['filename_prefix'] = [gf_extrap_fn]
@@ -282,10 +283,12 @@ if __name__ == '__main__':
                              GFOutput)
 
             GFSim.create(gf_input_fn, path=Dir.parameters['ibc_gf'])
+
+            subprocess.call(['diff '+gf_extrap_fn+' '+gf_extrap_fn])
 # %%
 
-
-#subprocess.call(['diff', ])
+#    for i in SrecLocations.locations:
+        #subprocess.call(['diff', ])
 
 # %%
 
