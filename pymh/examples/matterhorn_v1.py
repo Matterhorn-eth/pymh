@@ -43,6 +43,8 @@ if __name__ == '__main__':
     Dir = DirParam()
     Dir.makedirs()
 
+    # Add cluster
+
     # %% ----------------------------------------------------------------------
     # Initialize parameters
     # -------------------------------------------------------------------------
@@ -105,7 +107,7 @@ if __name__ == '__main__':
     SinjLocations.rectangle(origin=IBC.extraparameters['inj']['origin'],
                             number_of_cells=IBC.extraparameters['inj']['ncells'],
                             cell_size=IBC.extraparameters['inj']['cell_size'])
-    print SinjLocations.locations
+    # print SinjLocations.locations
     sinjlocations_fn = 'sinj_locations.txt'
     SinjLocations.write(sinjlocations_fn)
 
@@ -113,7 +115,7 @@ if __name__ == '__main__':
     SrecLocations.rectangle(origin=IBC.extraparameters['rec']['origin'],
                             number_of_cells=IBC.extraparameters['rec']['ncells'],
                             cell_size=IBC.extraparameters['rec']['cell_size'])
-    print SrecLocations.locations
+    # print SrecLocations.locations
     sreclocations_fn = 'srec_locations.txt'
     SrecLocations.write(sreclocations_fn)
 
@@ -123,9 +125,10 @@ if __name__ == '__main__':
 
     corners = []
     for loc in SrecLocations.locations:
-        if loc[3]//6 == 1: corners.append(loc[:3])
+        if loc[3]//6 == 1:
+            corners.append(loc[:3])
     corners = [corners[i] for i in [0, 1, 3, 2]]
-    print corners
+    # print corners
 
     IBC.extraparameters['source_inside'] = \
         isPinRectangle(corners, FullInput.parameters['location'])
@@ -143,23 +146,26 @@ if __name__ == '__main__':
     if not IBC.extraparameters['source_inside']:
         injection_sxx_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
-                                      receiver_locations=[sreclocations_fn],
+                                      receiver_locations=[sinjlocations_fn],
                                       filename_prefix=[injection_sxx_fn],
-                                      boundary_thickness=[1]))
+                                      boundary_thickness=[1],
+                                      attribute=['S00XX']))
 
         injection_vn_fn = 'injection_vn_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
-                                      receiver_locations=[sreclocations_fn],
+                                      receiver_locations=[sinjlocations_fn],
                                       filename_prefix=[injection_vn_fn],
                                       boundary_thickness=[1],
+                                      attribute=['normal_velocity'],
                                       stagger_on_sub_volume=[True]))
 
         if IBC.parameters['type'][0] is 'freesurface':
             injection_sxx_staggered_fn = 'injection_sxx_staggered_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
             FullOutput.append(OutputParam('sub_volume_boundary',
-                                          receiver_locations=[sreclocations_fn],
+                                          receiver_locations=[sinjlocations_fn],
                                           filename_prefix=[injection_sxx_staggered_fn],
                                           boundary_thickness=[1],
+                                          attribute=['S00XX'],
                                           stagger_on_sub_volume=[True]))
 
     full_input_fn = 'full.txt'
@@ -180,13 +186,15 @@ if __name__ == '__main__':
         IBCOutput.append(OutputParam('sub_volume_boundary',
                                      receiver_locations=[sreclocations_fn],
                                      filename_prefix=[ibc_extrap_sxx_fn],
-                                     boundary_thickness=[1]))
+                                     boundary_thickness=[1],
+                                     attribute=['S00XX']))
 
         ibc_extrap_vn_fn = 'ebc_extrap_vn'
         IBCOutput.append(OutputParam('sub_volume_boundary',
                                      receiver_locations=[sreclocations_fn],
                                      filename_prefix=[ibc_extrap_vn_fn],
                                      boundary_thickness=[1],
+                                     attribute=['normal_velocity'],
                                      stagger_on_sub_volume=[True]))
 
     ibc_input_fn = 'ibc.txt'
@@ -217,13 +225,15 @@ if __name__ == '__main__':
         InjectionOutput.append(OutputParam('sub_volume_boundary',
                                            receiver_locations=[sreclocations_fn],
                                            filename_prefix=[inj_extrap_sxx_fn],
-                                           boundary_thickness=[1]))
+                                           boundary_thickness=[1],
+                                           attribute=['S00XX']))
 
         inj_extrap_vn_fn = 'inj_extrap_vn'
         InjectionOutput.append(OutputParam('sub_volume_boundary',
                                            receiver_locations=[sreclocations_fn],
                                            filename_prefix=[inj_extrap_vn_fn],
                                            boundary_thickness=[1],
+                                           attribute=['normal_velocity'],
                                            stagger_on_sub_volume=[True]))
 
     injection_input_fn = 'injection.txt'
@@ -283,8 +293,12 @@ if __name__ == '__main__':
                              GFOutput)
 
             GFSim.create(gf_input_fn, path=Dir.parameters['ibc_gf'])
-
-            subprocess.call(['diff '+gf_extrap_fn+' '+gf_extrap_fn])
+            # diff_string = 'diff /w04d2/bfilippo/pymh/pymh/examples/IBC_simulation/GF_files/' + gf_extrap_fn + '.su /w04d2/bfilippo/matterhorn_filippo/tests/EBC/EBC_injection_v3/freesurface/EBC_simulation/GF_files/' + gf_extrap_fn2 + '.su'
+            # diff_string = 'diff /w04d2/bfilippo/pymh/pymh/examples/IBC_simulation/GF_files/' + gf_fn + '_volume_boundary /w04d2/bfilippo/matterhorn_filippo/tests/EBC/EBC_injection_v3/freesurface/EBC_simulation/GF_files/' + gf_fn + '_volume_boundary'
+            # diff_string = ['diff', 'IBC_simulation/GF_files/' + gf_fn + '_volume_boundary', 'IBC_simulation/GF_files/v3/EBC_simulation/GF_files/' + gf_fn + '_volume_boundary']
+            # print diff_string
+            # os.system(diff_string)
+            # subprocess.call(diff_string)
 # %%
 
 #    for i in SrecLocations.locations:
