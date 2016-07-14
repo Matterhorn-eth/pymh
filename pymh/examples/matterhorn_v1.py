@@ -21,7 +21,7 @@ import pymh
 from pymh.param.parameters import \
     GridParam, DecompositionParam, TimeParam, ModelParam, SimulationParam, \
     InputParam, OutputParam, BCParam, IBCParam, InjectionParam, \
-    DirParam, Locations
+    DirParam, LocationsParam
 from pymh.sim.simulations import \
     BasicSim
 from pymh.utils.utils import \
@@ -83,14 +83,14 @@ if __name__ == '__main__':
     # Injection
     Injection = InjectionParam('mps')
     InjectionGrid = GridParam(origin=Injection.extraparameters['origin'],
-                        number_of_cells=Injection.extraparameters['ncells'])
+                              number_of_cells=Injection.extraparameters['ncells'])
     InjectionDecomposition = DecompositionParam(number_of_cells_per_node_x=[Injection.extraparameters['ncells'][0]],
                                                 number_of_cells_per_node_y=[Injection.extraparameters['ncells'][1]],
-                                              number_of_cells_per_node_z=[Injection.extraparameters['ncells'][2]])
+                                                number_of_cells_per_node_z=[Injection.extraparameters['ncells'][2]])
     InjectionModel = ModelParam(filename_prefix=['model_inj'])
     InjectionOutput = []
     InjectionOutput.append(OutputParam('slice',
-                                 timestep_increment=[50]))
+                           timestep_increment=[50]))
     # Green's functions
     GFInput = InputParam(wavelet=['delta'],
                          spread=['single_point_staggered_velocity'])
@@ -103,28 +103,23 @@ if __name__ == '__main__':
     # Locations
     # -------------------------------------------------------------------------
 
-    SinjLocations = Locations()
-    SinjLocations.rectangle(origin=IBC.extraparameters['inj']['origin'],
-                            number_of_cells=IBC.extraparameters['inj']['ncells'],
-                            cell_size=IBC.extraparameters['inj']['cell_size'])
-    # print SinjLocations.locations
-    sinjlocations_fn = 'sinj_locations.txt'
-    SinjLocations.write(sinjlocations_fn)
-
-    SrecLocations = Locations()
-    SrecLocations.rectangle(origin=IBC.extraparameters['rec']['origin'],
-                            number_of_cells=IBC.extraparameters['rec']['ncells'],
-                            cell_size=IBC.extraparameters['rec']['cell_size'])
-    # print SrecLocations.locations
-    sreclocations_fn = 'srec_locations.txt'
-    SrecLocations.write(sreclocations_fn)
+    Locations = {}
+    locations_fn = {}
+    for surf in ('inj', 'rec'):
+        Locations[surf] = LocationsParam()
+        Locations[surf].rectangle(origin=IBC.extraparameters[surf]['origin'],
+                                  number_of_cells=IBC.extraparameters[surf]['ncells'],
+                                  cell_size=IBC.extraparameters[surf]['cell_size'])
+        # print Locations[surf].locations
+        locations_fn[surf] = 's' + surf + '_locations.txt'
+        Locations[surf].write(locations_fn[surf])
 
     # %% ----------------------------------------------------------------------
     # Is source outside or inside?
     # -------------------------------------------------------------------------
 
     corners = []
-    for loc in SrecLocations.locations:
+    for loc in Locations['rec'].locations:
         if loc[3]//6 == 1:
             corners.append(loc[:3])
     corners = [corners[i] for i in [0, 1, 3, 2]]
@@ -146,14 +141,14 @@ if __name__ == '__main__':
     if not IBC.extraparameters['source_inside']:
         injection_sxx_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
-                                      receiver_locations=[sinjlocations_fn],
+                                      receiver_locations=[locations_fn['inj']],
                                       filename_prefix=[injection_sxx_fn],
                                       boundary_thickness=[1],
                                       attribute=['S00XX']))
 
         injection_vn_fn = 'injection_vn_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
-                                      receiver_locations=[sinjlocations_fn],
+                                      receiver_locations=[locations_fn['inj']],
                                       filename_prefix=[injection_vn_fn],
                                       boundary_thickness=[1],
                                       attribute=['normal_velocity'],
@@ -162,7 +157,7 @@ if __name__ == '__main__':
         if IBC.parameters['type'][0] is 'freesurface':
             injection_sxx_staggered_fn = 'injection_sxx_staggered_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
             FullOutput.append(OutputParam('sub_volume_boundary',
-                                          receiver_locations=[sinjlocations_fn],
+                                          receiver_locations=[locations_fn['inj']],
                                           filename_prefix=[injection_sxx_staggered_fn],
                                           boundary_thickness=[1],
                                           attribute=['S00XX'],
@@ -184,14 +179,14 @@ if __name__ == '__main__':
     if IBC.extraparameters['extrap']:
         ibc_extrap_sxx_fn = 'ebc_extrap_sxx'
         IBCOutput.append(OutputParam('sub_volume_boundary',
-                                     receiver_locations=[sreclocations_fn],
+                                     receiver_locations=[locations_fn['rec']],
                                      filename_prefix=[ibc_extrap_sxx_fn],
                                      boundary_thickness=[1],
                                      attribute=['S00XX']))
 
         ibc_extrap_vn_fn = 'ebc_extrap_vn'
         IBCOutput.append(OutputParam('sub_volume_boundary',
-                                     receiver_locations=[sreclocations_fn],
+                                     receiver_locations=[locations_fn['rec']],
                                      filename_prefix=[ibc_extrap_vn_fn],
                                      boundary_thickness=[1],
                                      attribute=['normal_velocity'],
@@ -223,14 +218,14 @@ if __name__ == '__main__':
     if IBC.extraparameters['extrap']:
         inj_extrap_sxx_fn = 'inj_extrap_sxx'
         InjectionOutput.append(OutputParam('sub_volume_boundary',
-                                           receiver_locations=[sreclocations_fn],
+                                           receiver_locations=[locations_fn['rec']],
                                            filename_prefix=[inj_extrap_sxx_fn],
                                            boundary_thickness=[1],
                                            attribute=['S00XX']))
 
         inj_extrap_vn_fn = 'inj_extrap_vn'
         InjectionOutput.append(OutputParam('sub_volume_boundary',
-                                           receiver_locations=[sreclocations_fn],
+                                           receiver_locations=[locations_fn['rec']],
                                            filename_prefix=[inj_extrap_vn_fn],
                                            boundary_thickness=[1],
                                            attribute=['normal_velocity'],
@@ -254,7 +249,7 @@ if __name__ == '__main__':
     else:
         GFOutput[0].parameters['attribute'] = ['normal_velocity']
 
-    GFOutput[0].parameters['receiver_locations'] = [sinjlocations_fn]
+    GFOutput[0].parameters['receiver_locations'] = [locations_fn['inj']]
 
     if IBC.extraparameters['extrap']:
         GFOutput.append(OutputParam('shot_gather',
@@ -262,27 +257,35 @@ if __name__ == '__main__':
                                     receiver_increment=[8, 0, 0],
                                     number_of_receivers=[125]))
 
-    facedict = {0: ('x_di', 'x_source'),
-                1: ('x_di', 'x_source'),
-                2: ('z_di', 'z_source'),
-                3: ('z_di', 'z_source')
+    facedict = {0: (('mono', 'isotropic_stress_source', 'mono'), ('x_di', 'x_source', 'di')),
+                1: (('mono', 'isotropic_stress_source', 'mono'), ('x_di', 'x_source', 'di')),
+                2: (('mono', 'isotropic_stress_source', 'mono'), ('z_di', 'z_source', 'di')),
+                3: (('mono', 'isotropic_stress_source', 'mono'), ('z_di', 'z_source', 'di'))
                 }
 
-    for i in SrecLocations.locations:
-        face = i[3] % 6
-        for (j, k) in [('mono', 'isotropic_stress_source'), facedict[face]]:
+    gf_input_fn = {}
+    gf_fn = {}
+    gf_extrap_fn = {}
+    for i in ('mono', 'di'):
+        gf_input_fn[i] = []
+        gf_fn[i] = []
+        gf_extrap_fn[i] = []
 
-            gf_input_fn = 'input_{}_x_{}_y_{}_z_{}.txt'.format(j, *i[:3])
+    for (i, loc) in enumerate(Locations['rec'].locations):
+        face = loc[3] % 6
+        for (j, k, l) in facedict[face]:
+
+            gf_input_fn[l].append('input_{}_x_{}_y_{}_z_{}.txt'.format(j, *loc[:3]))
 
             GFInput.parameters['type'] = [k]
-            GFInput.parameters['location'] = list(i[:3])
+            GFInput.parameters['location'] = list(loc[:3])
 
-            gf_fn = 'GF_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
-            gf_extrap_fn = 'GF_extrap_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
-            gf_extrap_fn2 = 'extrap_GF_{}_x_{}_y_{}_z_{}'.format(j, *i[:3])
+            gf_fn[l].append('GF_{}_x_{}_y_{}_z_{}'.format(j, *loc[:3]))
+            gf_extrap_fn[l].append('GF_extrap_{}_x_{}_y_{}_z_{}'.format(j, *loc[:3]))
+            # gf_extrap_fn2 = 'extrap_GF_{}_x_{}_y_{}_z_{}'.format(j, *loc[:3])
 
-            GFOutput[0].parameters['filename_prefix'] = [gf_fn]
-            GFOutput[1].parameters['filename_prefix'] = [gf_extrap_fn]
+            GFOutput[0].parameters['filename_prefix'] = [gf_fn[l][i]]
+            GFOutput[1].parameters['filename_prefix'] = [gf_extrap_fn[l][i]]
 
             GFSim = BasicSim(FullGrid,
                              FullDecomposition,
@@ -292,18 +295,37 @@ if __name__ == '__main__':
                              GFInput,
                              GFOutput)
 
-            GFSim.create(gf_input_fn, path=Dir.parameters['ibc_gf'])
+            GFSim.create(gf_input_fn[l][i], path=Dir.parameters['ibc_gf'])
+
+# %%
+
+    for i in ('mono', 'di'):
+        vb_fn = 'GF_mono_volume_boundary_list.txt'
+        vb_fid = open('/'.join([Dir.parameters['ibc_gf'], vb_fn]), 'w')
+        for i in gf_fn['mono']:
+            vb_fid.write('{}_volume_boundary\n'.format(i))
+        vb_fid.close()
+
+# Need to create:
+# GF_mono_utility.txt
+# GF_di_utility.txt
+# injection_di_utility.txt
+# injection_di_utility.txt
+# GF_mono_volume_boundary_list.txt
+# GF_di_volume_boundary_list.txt
+# injection_mono_volume_boundary_list.txt
+# injection_di_volume_boundary_list.txt
+# %%
+
+#    for i in SrecLocations.locations:
+        #subprocess.call(['diff', ])
+
             # diff_string = 'diff /w04d2/bfilippo/pymh/pymh/examples/IBC_simulation/GF_files/' + gf_extrap_fn + '.su /w04d2/bfilippo/matterhorn_filippo/tests/EBC/EBC_injection_v3/freesurface/EBC_simulation/GF_files/' + gf_extrap_fn2 + '.su'
             # diff_string = 'diff /w04d2/bfilippo/pymh/pymh/examples/IBC_simulation/GF_files/' + gf_fn + '_volume_boundary /w04d2/bfilippo/matterhorn_filippo/tests/EBC/EBC_injection_v3/freesurface/EBC_simulation/GF_files/' + gf_fn + '_volume_boundary'
             # diff_string = ['diff', 'IBC_simulation/GF_files/' + gf_fn + '_volume_boundary', 'IBC_simulation/GF_files/v3/EBC_simulation/GF_files/' + gf_fn + '_volume_boundary']
             # print diff_string
             # os.system(diff_string)
             # subprocess.call(diff_string)
-# %%
-
-#    for i in SrecLocations.locations:
-        #subprocess.call(['diff', ])
-
 # %%
 
     # shot = SEGYFile('shot.su', isSU=True)

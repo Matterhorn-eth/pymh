@@ -334,7 +334,7 @@ class OutputParam(BaseParam):
 
 
 # %% Locations
-class Locations(object):
+class LocationsParam(object):
     """ Base class for describing locations in `Matterhorn`.
 
     """
@@ -348,6 +348,8 @@ class Locations(object):
         print '2D only!'
 
     def rectangle(self, **kwargs):
+        """ Create rectangular surface """
+
         self.origin = kwargs['origin']
         self.number_of_cells = kwargs['number_of_cells']
         self.cell_size = kwargs['cell_size']
