@@ -14,7 +14,7 @@ def isPinRectangle(r, P):
         P: A point
     """
 
-    print P[0], P[1]
+    # print P[0], P[1]
     areaRectangle = 0.5*abs(
         #                 y_A      y_C      x_D      x_B
                         (r[0][2]-r[2][2])*(r[3][0]-r[1][0])
@@ -43,6 +43,6 @@ def isPinRectangle(r, P):
             +P[0]*(r[3][2]-r[0][2])
           )
 
-    print 'area: %s\n' % areaRectangle
-    print 'sum: %s %s %s %s\n' % (ABP, BCP, CDP, DAP)
+    # print 'area: %s\n' % areaRectangle
+    # print 'sum: %s %s %s %s\n' % (ABP, BCP, CDP, DAP)
     return areaRectangle == (ABP+BCP+CDP+DAP)

@@ -402,7 +402,7 @@ class LocationsParam(object):
             # filename.writelines('{} {}\n'.format(k,v)
             # for k, v in self.parameters.items())
             values = ' '.join(str(i) for i in loc)
-            print values
+            # print values
             self.file.write('{}\n'.format(values))
         self.file.close()
 

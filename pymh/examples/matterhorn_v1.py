@@ -14,8 +14,8 @@ import copy
 
 sys.dont_write_bytecode = True
 
-pymhfolder = '/w04d2/bfilippo/pymh'
-# pymhfolder = '/Users/filippo/work/pymh'
+# pymhfolder = '/w04d2/bfilippo/pymh'
+pymhfolder = '/Users/filippo/work/pymh'
 sys.path.insert(0, pymhfolder)
 
 import pymh
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     Dir = DirParam()
     Dir.makedirs()
 
-    # Add cluster
+    # Add cluster directory
 
     # %% ----------------------------------------------------------------------
     # Initialize parameters
@@ -117,6 +117,7 @@ if __name__ == '__main__':
         Locations[surf].write(locations_fn[surf])
 
     # Temporary, eventually I need to fix this
+    # It is only needed when using gffu to reorder injection boundary data
     Locations_for_inj_util = copy.deepcopy(Locations['rec'])
     Locations_for_inj_util.locations[1:] = []
     locations_inj_fn = 's' + 'rec' + '_locations_injection.txt'
@@ -126,6 +127,8 @@ if __name__ == '__main__':
     # Is source outside or inside?
     # -------------------------------------------------------------------------
 
+    # This also needs to be improved a lot
+    # Right now, it only check if the source is inside srec
     corners = []
     for loc in Locations['rec'].locations:
         if loc[3]//6 == 1:
@@ -139,6 +142,8 @@ if __name__ == '__main__':
     # %% ----------------------------------------------------------------------
     # Extrapolation?
     # -------------------------------------------------------------------------
+
+    # Does it really have to be included in IBC?
     IBC.extraparameters['extrap'] = True
 
     # %% ----------------------------------------------------------------------
@@ -170,6 +175,10 @@ if __name__ == '__main__':
                                           boundary_thickness=[1],
                                           attribute=['S00XX'],
                                           stagger_on_sub_volume=[True]))
+
+    injection_fn = {}
+    injection_fn['mono'] = [injection_mono_fn]
+    injection_fn['di'] = [injection_di_fn]
 
     full_input_fn = 'full.txt'
 
@@ -308,62 +317,30 @@ if __name__ == '__main__':
 # %%
     # GF_mono_volume_boundary_list.txt
     # GF_di_volume_boundary_list.txt
-    gf_vb_fn = {}
-    for md in ('mono', 'di'):
-        gf_vb_fn[md] = 'GF_' + md + '_volume_boundary_list.txt'
-        gf_vb_fid = open('/'.join([Dir.parameters['ibc_gf'], gf_vb_fn[md]]), 'w')
-        for i in gf_fn[md]:
-            gf_vb_fid.write('{}_volume_boundary\n'.format(i))
-        gf_vb_fid.close()
+    gf_vb_fn = IBCSim.volume_boundary(prefix='GF', list_fn=gf_fn,
+                   path=Dir.parameters['ibc_gf'])
 
 # %%
     # GF_mono_utility.txt
     # GF_di_utility.txt
-    gf_util_fn = {}
-    for md in ('mono', 'di'):
-        gf_util_fn[md] = 'GF_' + md + '_utility.txt'
-        gf_util_fid = open('/'.join([Dir.parameters['ibc_gf'], gf_util_fn[md]]), 'w')
-        if IBCGrid.parameters['number_of_cells'][1] == 1:
-            gf_util_fid.write('2d\n')
-        else:
-            gf_util_fid.write('3d\n')
-        gf_util_fid.write('input_file_list_name {}\n'.format(gf_vb_fn[md]))
-        gf_util_fid.write('output_file_name_prefix {}\n'.format('GF_' + md))
-        gf_util_fid.write('sinj_locations {}\n'.format(locations_fn['inj']))
-        gf_util_fid.write('srec_locations {}\n'.format(locations_fn['rec']))
-        gf_util_fid.write('number_of_timesteps {}\n'.format(Time.parameters['number_of_timesteps'][0]))
-        gf_util_fid.close()
+    gf_util_fn = IBCSim.utility(prefix='GF', nt=Time.parameters['number_of_timesteps'][0],
+                   sinj='sinj_locations.txt',
+                   srec='srec_locations.txt',
+                   path=Dir.parameters['ibc_gf'])
 
 # %%
     # injection_mono_volume_boundary_list.txt
     # injection_di_volume_boundary_list.txt
-    inj_vb_fn = {}
-    for md in ('mono', 'di'):
-        inj_vb_fn[md] = 'injection_' + md + '_volume_boundary_list.txt'
-        inj_vb_fid = open('/'.join([Dir.parameters['ref'], inj_vb_fn[md]]), 'w')
-        if md == 'mono':
-            inj_vb_fid.write('{}_volume_boundary\n'.format(injection_mono_fn))
-        elif md == 'di':
-            inj_vb_fid.write('{}_volume_boundary\n'.format(injection_di_fn))
-        inj_vb_fid.close()
+    inj_vb_fn = IBCSim.volume_boundary(prefix='injection', list_fn=injection_fn,
+                   path=Dir.parameters['ref'])
 
 # %%
     # injection_mono_utility.txt
     # injection_di_utility.txt
-    inj_util_fn = {}
-    for md in ('mono', 'di'):
-        inj_util_fn[md] = 'injection_' + md + '_utility.txt'
-        inj_util_fid = open('/'.join([Dir.parameters['ref'], inj_util_fn[md]]), 'w')
-        if IBCGrid.parameters['number_of_cells'][1] == 1:
-            inj_util_fid.write('2d\n')
-        else:
-            inj_util_fid.write('3d\n')
-        inj_util_fid.write('input_file_list_name {}\n'.format(inj_vb_fn[md]))
-        inj_util_fid.write('output_file_name_prefix {}\n'.format('injection_' + md))
-        inj_util_fid.write('sinj_locations {}\n'.format(locations_fn['inj']))
-        inj_util_fid.write('srec_locations {}\n'.format(locations_inj_fn))
-        inj_util_fid.write('number_of_timesteps {}\n'.format(Time.parameters['number_of_timesteps'][0]))
-        inj_util_fid.close()
+    InjectionSim.utility(prefix='injection', nt=Time.parameters['number_of_timesteps'][0],
+               sinj='sinj_locations.txt',
+               srec='srec_locations_injection.txt',
+               path=Dir.parameters['ref'])
 
 # %%
 

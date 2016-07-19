@@ -50,6 +50,19 @@ class BaseSim(object):
 
         return fn
 
+    def volume_boundary(self, list_fn={}, prefix='LOL', path=os.curdir):
+        """ Create volume boundary files """
+
+        fn = {}
+        for md in ('mono', 'di'):
+            fn[md] = prefix + '_' + md + '_volume_boundary_list.txt'
+            fid = open('/'.join([path, fn[md]]), 'w')
+            for i in list_fn[md]:
+                fid.write('{}_volume_boundary\n'.format(i))
+            fid.close()
+
+        return fn
+
 
 class BasicSim(BaseSim):
     """ Class for describing basic simulations in `Matterhorn`.
