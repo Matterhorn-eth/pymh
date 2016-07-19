@@ -10,6 +10,7 @@ import subprocess
 from segyread_new import SEGYFile
 import matplotlib.pyplot as plt
 import os
+import copy
 
 sys.dont_write_bytecode = True
 
@@ -32,6 +33,7 @@ reload(pymh.param.parameters)
 # Abbreviations
 # fn = filename
 # bd = boundary
+# vb = volume boundary
 
 
 # %%
@@ -114,6 +116,12 @@ if __name__ == '__main__':
         locations_fn[surf] = 's' + surf + '_locations.txt'
         Locations[surf].write(locations_fn[surf])
 
+    # Temporary, eventually I need to fix this
+    Locations_for_inj_util = copy.deepcopy(Locations['rec'])
+    Locations_for_inj_util.locations[1:] = []
+    locations_inj_fn = 's' + 'rec' + '_locations_injection.txt'
+    Locations_for_inj_util.write(locations_inj_fn, path=Dir.parameters['ref'])
+
     # %% ----------------------------------------------------------------------
     # Is source outside or inside?
     # -------------------------------------------------------------------------
@@ -139,26 +147,26 @@ if __name__ == '__main__':
 
     # Full
     if not IBC.extraparameters['source_inside']:
-        injection_sxx_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
+        injection_mono_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
                                       receiver_locations=[locations_fn['inj']],
-                                      filename_prefix=[injection_sxx_fn],
+                                      filename_prefix=[injection_mono_fn],
                                       boundary_thickness=[1],
                                       attribute=['S00XX']))
 
-        injection_vn_fn = 'injection_vn_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
+        injection_di_fn = 'injection_vn_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
         FullOutput.append(OutputParam('sub_volume_boundary',
                                       receiver_locations=[locations_fn['inj']],
-                                      filename_prefix=[injection_vn_fn],
+                                      filename_prefix=[injection_di_fn],
                                       boundary_thickness=[1],
                                       attribute=['normal_velocity'],
                                       stagger_on_sub_volume=[True]))
 
         if IBC.parameters['type'][0] is 'freesurface':
-            injection_sxx_staggered_fn = 'injection_sxx_staggered_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
+            injection_mono_staggered_fn = 'injection_sxx_staggered_x_{}_y_{}_z_{}'.format(*FullInput.parameters['location'])
             FullOutput.append(OutputParam('sub_volume_boundary',
                                           receiver_locations=[locations_fn['inj']],
-                                          filename_prefix=[injection_sxx_staggered_fn],
+                                          filename_prefix=[injection_mono_staggered_fn],
                                           boundary_thickness=[1],
                                           attribute=['S00XX'],
                                           stagger_on_sub_volume=[True]))
@@ -177,17 +185,17 @@ if __name__ == '__main__':
 
     # IBC
     if IBC.extraparameters['extrap']:
-        ibc_extrap_sxx_fn = 'ebc_extrap_sxx'
+        ibc_extrap_mono_fn = 'ebc_extrap_sxx'
         IBCOutput.append(OutputParam('sub_volume_boundary',
                                      receiver_locations=[locations_fn['rec']],
-                                     filename_prefix=[ibc_extrap_sxx_fn],
+                                     filename_prefix=[ibc_extrap_mono_fn],
                                      boundary_thickness=[1],
                                      attribute=['S00XX']))
 
-        ibc_extrap_vn_fn = 'ebc_extrap_vn'
+        ibc_extrap_di_fn = 'ebc_extrap_vn'
         IBCOutput.append(OutputParam('sub_volume_boundary',
                                      receiver_locations=[locations_fn['rec']],
-                                     filename_prefix=[ibc_extrap_vn_fn],
+                                     filename_prefix=[ibc_extrap_di_fn],
                                      boundary_thickness=[1],
                                      attribute=['normal_velocity'],
                                      stagger_on_sub_volume=[True]))
@@ -216,17 +224,17 @@ if __name__ == '__main__':
 
     # Injection
     if IBC.extraparameters['extrap']:
-        inj_extrap_sxx_fn = 'inj_extrap_sxx'
+        inj_extrap_mono_fn = 'inj_extrap_sxx'
         InjectionOutput.append(OutputParam('sub_volume_boundary',
                                            receiver_locations=[locations_fn['rec']],
-                                           filename_prefix=[inj_extrap_sxx_fn],
+                                           filename_prefix=[inj_extrap_mono_fn],
                                            boundary_thickness=[1],
                                            attribute=['S00XX']))
 
-        inj_extrap_vn_fn = 'inj_extrap_vn'
+        inj_extrap_di_fn = 'inj_extrap_vn'
         InjectionOutput.append(OutputParam('sub_volume_boundary',
                                            receiver_locations=[locations_fn['rec']],
-                                           filename_prefix=[inj_extrap_vn_fn],
+                                           filename_prefix=[inj_extrap_di_fn],
                                            boundary_thickness=[1],
                                            attribute=['normal_velocity'],
                                            stagger_on_sub_volume=[True]))
@@ -298,23 +306,65 @@ if __name__ == '__main__':
             GFSim.create(gf_input_fn[l][i], path=Dir.parameters['ibc_gf'])
 
 # %%
+    # GF_mono_volume_boundary_list.txt
+    # GF_di_volume_boundary_list.txt
+    gf_vb_fn = {}
+    for md in ('mono', 'di'):
+        gf_vb_fn[md] = 'GF_' + md + '_volume_boundary_list.txt'
+        gf_vb_fid = open('/'.join([Dir.parameters['ibc_gf'], gf_vb_fn[md]]), 'w')
+        for i in gf_fn[md]:
+            gf_vb_fid.write('{}_volume_boundary\n'.format(i))
+        gf_vb_fid.close()
 
-    for i in ('mono', 'di'):
-        vb_fn = 'GF_mono_volume_boundary_list.txt'
-        vb_fid = open('/'.join([Dir.parameters['ibc_gf'], vb_fn]), 'w')
-        for i in gf_fn['mono']:
-            vb_fid.write('{}_volume_boundary\n'.format(i))
-        vb_fid.close()
+# %%
+    # GF_mono_utility.txt
+    # GF_di_utility.txt
+    gf_util_fn = {}
+    for md in ('mono', 'di'):
+        gf_util_fn[md] = 'GF_' + md + '_utility.txt'
+        gf_util_fid = open('/'.join([Dir.parameters['ibc_gf'], gf_util_fn[md]]), 'w')
+        if IBCGrid.parameters['number_of_cells'][1] == 1:
+            gf_util_fid.write('2d\n')
+        else:
+            gf_util_fid.write('3d\n')
+        gf_util_fid.write('input_file_list_name {}\n'.format(gf_vb_fn[md]))
+        gf_util_fid.write('output_file_name_prefix {}\n'.format('GF_' + md))
+        gf_util_fid.write('sinj_locations {}\n'.format(locations_fn['inj']))
+        gf_util_fid.write('srec_locations {}\n'.format(locations_fn['rec']))
+        gf_util_fid.write('number_of_timesteps {}\n'.format(Time.parameters['number_of_timesteps'][0]))
+        gf_util_fid.close()
 
-# Need to create:
-# GF_mono_utility.txt
-# GF_di_utility.txt
-# injection_di_utility.txt
-# injection_di_utility.txt
-# GF_mono_volume_boundary_list.txt
-# GF_di_volume_boundary_list.txt
-# injection_mono_volume_boundary_list.txt
-# injection_di_volume_boundary_list.txt
+# %%
+    # injection_mono_volume_boundary_list.txt
+    # injection_di_volume_boundary_list.txt
+    inj_vb_fn = {}
+    for md in ('mono', 'di'):
+        inj_vb_fn[md] = 'injection_' + md + '_volume_boundary_list.txt'
+        inj_vb_fid = open('/'.join([Dir.parameters['ref'], inj_vb_fn[md]]), 'w')
+        if md == 'mono':
+            inj_vb_fid.write('{}_volume_boundary\n'.format(injection_mono_fn))
+        elif md == 'di':
+            inj_vb_fid.write('{}_volume_boundary\n'.format(injection_di_fn))
+        inj_vb_fid.close()
+
+# %%
+    # injection_mono_utility.txt
+    # injection_di_utility.txt
+    inj_util_fn = {}
+    for md in ('mono', 'di'):
+        inj_util_fn[md] = 'injection_' + md + '_utility.txt'
+        inj_util_fid = open('/'.join([Dir.parameters['ref'], inj_util_fn[md]]), 'w')
+        if IBCGrid.parameters['number_of_cells'][1] == 1:
+            inj_util_fid.write('2d\n')
+        else:
+            inj_util_fid.write('3d\n')
+        inj_util_fid.write('input_file_list_name {}\n'.format(inj_vb_fn[md]))
+        inj_util_fid.write('output_file_name_prefix {}\n'.format('injection_' + md))
+        inj_util_fid.write('sinj_locations {}\n'.format(locations_fn['inj']))
+        inj_util_fid.write('srec_locations {}\n'.format(locations_inj_fn))
+        inj_util_fid.write('number_of_timesteps {}\n'.format(Time.parameters['number_of_timesteps'][0]))
+        inj_util_fid.close()
+
 # %%
 
 #    for i in SrecLocations.locations:
