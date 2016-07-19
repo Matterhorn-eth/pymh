@@ -14,8 +14,8 @@ import copy
 
 sys.dont_write_bytecode = True
 
-# pymhfolder = '/w04d2/bfilippo/pymh'
-pymhfolder = '/Users/filippo/work/pymh'
+pymhfolder = '/w04d2/bfilippo/pymh'
+# pymhfolder = '/Users/filippo/work/pymh'
 sys.path.insert(0, pymhfolder)
 
 import pymh
