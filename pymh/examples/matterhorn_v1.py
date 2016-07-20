@@ -7,10 +7,11 @@ Created on Thu Jul  7 14:32:12 2016
 # %%
 import sys
 import subprocess
-from segyread_new import SEGYFile
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import os
 import copy
+import numpy as np
 
 sys.dont_write_bytecode = True
 
@@ -27,6 +28,12 @@ from pymh.sim.simulations import \
     BasicSim
 from pymh.utils.utils import \
     isPinRectangle
+from pymh.utils import \
+    segyread_new
+from pymh.utils import \
+    segyread
+from pymh.io.model import \
+    truncate
 
 reload(pymh.param.parameters)
 
@@ -54,6 +61,15 @@ if __name__ == '__main__':
     # Common
     Time = TimeParam()
     BC = BCParam('pml')
+
+    inprefix = 'model_full'
+    ext = '.su'
+    model_full = {}
+    for attr in ('vp', 'rho'):
+        model_full[attr] = segyread_new.SEGYFile('/'.join([Dir.parameters['ref'], inprefix + '_' + attr + ext]), isSU=True)
+
+    nz = model_full['vp'].ns
+    nx = len(model_full['vp'])
 
     # Full
     FullGrid = GridParam()
@@ -102,6 +118,24 @@ if __name__ == '__main__':
                                 boundary_thickness=[1]))
 
     # %% ----------------------------------------------------------------------
+    # Models
+    # -------------------------------------------------------------------------
+
+    # IBC model
+    truncate(SmallGrid=IBCGrid,
+             inprefix='model_full', inpath=Dir.parameters['ref'],
+             outprefix='model_ibc', outpath=Dir.parameters['ibc'],
+             ispadding=True,
+             ext='.su')
+
+    # Injection model
+    truncate(SmallGrid=InjectionGrid,
+             inprefix='model_full', inpath=Dir.parameters['ref'],
+             outprefix='model_inj', outpath=Dir.parameters['inj'],
+             ispadding=False,
+             ext='.su')
+
+    # %% ----------------------------------------------------------------------
     # Locations
     # -------------------------------------------------------------------------
 
@@ -114,7 +148,11 @@ if __name__ == '__main__':
                                   cell_size=IBC.extraparameters[surf]['cell_size'])
         # print Locations[surf].locations
         locations_fn[surf] = 's' + surf + '_locations.txt'
-        Locations[surf].write(locations_fn[surf])
+        Locations[surf].write(locations_fn[surf], path=Dir.parameters['ref'])
+        Locations[surf].write(locations_fn[surf], path=Dir.parameters['ibc'])
+        Locations[surf].write(locations_fn[surf], path=Dir.parameters['ibc_gf'])
+
+    Locations['inj'].write(locations_fn['inj'], path=Dir.parameters['inj'])
 
     # Temporary, eventually I need to fix this
     # It is only needed when using gffu to reorder injection boundary data
@@ -147,7 +185,7 @@ if __name__ == '__main__':
     IBC.extraparameters['extrap'] = True
 
     # %% ----------------------------------------------------------------------
-    # Create files
+    # Create simulation files
     # -------------------------------------------------------------------------
 
     # Full
@@ -314,33 +352,29 @@ if __name__ == '__main__':
 
             GFSim.create(gf_input_fn[l][i], path=Dir.parameters['ibc_gf'])
 
-# %%
-    # GF_mono_volume_boundary_list.txt
-    # GF_di_volume_boundary_list.txt
+    # %% ----------------------------------------------------------------------
+    # Create volume boundary list files
+    # -------------------------------------------------------------------------
     gf_vb_fn = IBCSim.volume_boundary(prefix='GF', list_fn=gf_fn,
                    path=Dir.parameters['ibc_gf'])
 
-# %%
-    # GF_mono_utility.txt
-    # GF_di_utility.txt
-    gf_util_fn = IBCSim.utility(prefix='GF', nt=Time.parameters['number_of_timesteps'][0],
-                   sinj='sinj_locations.txt',
-                   srec='srec_locations.txt',
-                   path=Dir.parameters['ibc_gf'])
-
-# %%
-    # injection_mono_volume_boundary_list.txt
-    # injection_di_volume_boundary_list.txt
     inj_vb_fn = IBCSim.volume_boundary(prefix='injection', list_fn=injection_fn,
                    path=Dir.parameters['ref'])
 
-# %%
-    # injection_mono_utility.txt
-    # injection_di_utility.txt
-    InjectionSim.utility(prefix='injection', nt=Time.parameters['number_of_timesteps'][0],
-               sinj='sinj_locations.txt',
-               srec='srec_locations_injection.txt',
-               path=Dir.parameters['ref'])
+    # %% ----------------------------------------------------------------------
+    # Create utility files
+    # -------------------------------------------------------------------------
+    gf_util_fn = IBCSim.utility(prefix='GF',
+                                nt=Time.parameters['number_of_timesteps'][0],
+                                sinj='sinj_locations.txt',
+                                srec='srec_locations.txt',
+                                path=Dir.parameters['ibc_gf'])
+
+    inj_util_fn = InjectionSim.utility(prefix='injection',
+                                       nt=Time.parameters['number_of_timesteps'][0],
+                                       sinj='sinj_locations.txt',
+                                       srec='srec_locations_injection.txt',
+                                       path=Dir.parameters['ref'])
 
 # %%
 
@@ -355,9 +389,45 @@ if __name__ == '__main__':
             # subprocess.call(diff_string)
 # %%
 
-    # shot = SEGYFile('shot.su', isSU=True)
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(1, 1, 1)
-    # im = ax.imshow(shot.readTraces().T, aspect='auto')
-    # plt.show()
+
+    inprefix = 'model_full'
+    ext = '.su'
+    model_full = {}
+    for attr in ('vp', 'rho'):
+        model_full[attr] = segyread_new.SEGYFile('/'.join([Dir.parameters['ref'], inprefix + '_' + attr + ext]), isSU=True)
+
+    inprefix = 'model_ibc'
+    ext = '.su'
+    model_ibc = {}
+    for attr in ('vp', 'rho'):
+        model_ibc[attr] = segyread_new.SEGYFile('/'.join([Dir.parameters['ibc'], inprefix + '_' + attr + ext]), isSU=True)
+
+    inprefix = 'model_inj'
+    ext = '.su'
+    model_inj = {}
+    for attr in ('vp', 'rho'):
+        model_inj[attr] = segyread_new.SEGYFile('/'.join([Dir.parameters['inj'], inprefix + '_' + attr + ext]), isSU=True)
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(3, 3)
+
+    ax = fig.add_subplot(gs[0, 0])
+    im = ax.imshow(model_full['vp'][:].T, aspect='auto')
+
+    ax = fig.add_subplot(gs[0, 1])
+    im = ax.imshow(model_ibc['vp'][:].T, aspect='auto')
+
+    ax = fig.add_subplot(gs[0, 2])
+    im = ax.imshow(model_inj['vp'][:].T, aspect='auto')
+
+    ax = fig.add_subplot(gs[1, 0])
+    im = ax.imshow(model_full['rho'][:].T, aspect='auto')
+
+    ax = fig.add_subplot(gs[1, 1])
+    im = ax.imshow(model_ibc['rho'][:].T, aspect='auto')
+
+    ax = fig.add_subplot(gs[1, 2])
+    im = ax.imshow(model_inj['rho'][:].T, aspect='auto')
+
+    plt.show()
