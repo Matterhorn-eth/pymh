@@ -16,6 +16,7 @@ filedict = {
     }
 
 dirdict = {
+    'base': ['REF_simulation'],
     'ref': ['REF_simulation'],
     'inj': ['INJ_simulation'],
     'ibc': ['IBC_simulation'],
@@ -418,19 +419,22 @@ class DirParam(object):
 
     def __init__(self, *configs):
         self.parameters = dirdict.copy()
+        self.parameters['base'] = os.getcwd()
 
         for d in self.parameters:
-            self.parameters[d] = \
-                '/'.join([os.getcwd(), str(self.parameters[d][0])])
+            if d not in 'base':
+                self.parameters[d] = \
+                    '/'.join([self.parameters['base'], str(self.parameters[d][0])])
 
     def makedirs(self):
         """ Create directories """
 
         for key in self.parameters:
-            try:
-                os.makedirs(self.parameters[key])
-            except OSError:
-                print 'Directory %s already exists\n' % self.parameters[key]
+            if key not in 'base':
+                try:
+                    os.makedirs(self.parameters[key])
+                except OSError:
+                    print 'Directory %s already exists\n' % self.parameters[key]
 
 # %%
         # Setup access in the parameters dict by both letter and dimension number
