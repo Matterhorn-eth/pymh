@@ -51,7 +51,7 @@ def plot(fn,
     )
 
     # Set style-specific attributes
-    if style == 'gather':
+    if style == 'shotgather':
         clipmin = -clip
         clipmax = +clip
         ax.xaxis.set_label_text('Horizontal location [m]')
@@ -68,6 +68,16 @@ def plot(fn,
         ax.yaxis.set_label_text('Depth [m]')
         if title is None:
             ax.set_title('Slice')
+        else:
+            ax.set_title(title)
+        cb_label = 'Amplitude'
+    elif style == 'volumeboundary':
+        clipmin = -clip
+        clipmax = +clip
+        ax.xaxis.set_label_text('Horizontal location [m]')
+        ax.yaxis.set_label_text('Time [s]')
+        if title is None:
+            ax.set_title('Volume boundary')
         else:
             ax.set_title(title)
         cb_label = 'Amplitude'

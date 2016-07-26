@@ -19,7 +19,7 @@ import pymh
 from pymh.io.output import \
     ShotGather, VolumeBoundary
 
-# reload(pymh.io.output)
+reload(pymh.io.output)
 # reload(pymh.core.classes)
 
 # %%

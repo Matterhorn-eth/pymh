@@ -11,8 +11,7 @@ import numpy as np
 import struct
 from pymh.param.parameters import \
     GridParam, OutputParam, DirParam
-#from pymh.core.classes import \
-#    ShotGather #, Slice, VolumeBoundary
+import pymh.vis.vis as vis
 from pymh.utils.segyread_new import \
     SEGYFile
 
@@ -24,7 +23,8 @@ class BaseOutput(object):
     type = None
 
     # def __init__(self):
-    a = 1
+    def plot(self, **kwargs):
+        vis.plot(self.data, style=self.type, **kwargs)
 
 
 class ShotGather(BaseOutput):
@@ -51,14 +51,14 @@ class VolumeBoundary(BaseOutput):
     def __init__(self, fn, nt=1000, endian='Little', isSU=True, ext='',
                  inpath=os.curdir):
         self.nt = nt
-        fid = io.open('injection_sxx_x_2500_y_0_z_10_volume_boundary', mode='rb')
-        # fid = io.open('/'.join([inpath, fn + ext]), mode='rb')
+        fid = io.open('/'.join([inpath, fn + ext]), mode='rb')
         header = fid.read(48)
         headerstruct = '<12i'
         self.header = struct.unpack(headerstruct, header)
-        data = fid.read(header[10]*nt*4)
-        datastruct = '<%df' % (header[10]*nt)
-        self.data = np.reshape(np.array(struct.unpack(datastruct, data), dtype=np.float32), [header[10], nt])
+        data = fid.read(self.header[10]*nt*4)
+        datastruct = '<%df' % (self.header[10]*nt)
+        self.data = np.reshape(np.array(struct.unpack(datastruct, data), dtype=np.float32),
+                               [nt, self.header[10]]).T
         fid.close()
 
 
