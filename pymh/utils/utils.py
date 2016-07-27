@@ -4,7 +4,10 @@ Created on Fri Jul  8 16:14:19 2016
 
 @author: bfilippo
 """
-#import os
+
+from __future__ import absolute_import
+
+__all__ = ['isPinRectangle']
 
 
 # %%

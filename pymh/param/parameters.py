@@ -1,4 +1,9 @@
+from __future__ import absolute_import
 import os
+
+__all__ = ['GridParam', 'TimeParam', 'DecompositionParam', 'ModelParam',
+           'SimulationParam', 'IBCParam', 'InjectionParam', 'BCParam',
+           'OutputParam', 'InputParam', 'DirParam', 'LocationsParam', ]
 
 # __all__ = ['DomainBase', 'RectangularDomain', 'DomainBC', 'Neumann',
 # 'Dirichlet', 'PML']

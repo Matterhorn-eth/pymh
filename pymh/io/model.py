@@ -5,12 +5,15 @@ Created on Wed Jul 20 11:11:57 2016
 @author: bfilippo
 """
 
+from __future__ import absolute_import
 import os
 import numpy as np
 from pymh.param.parameters import \
     GridParam
 from pymh.utils.segyread_new import \
     SEGYFile
+
+__all__ = ['truncate']
 
 
 # %%

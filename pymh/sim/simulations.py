@@ -4,7 +4,11 @@ Created on Fri Jul  8 16:14:19 2016
 
 @author: bfilippo
 """
+
+from __future__ import absolute_import
 import os
+
+__all__ = ['BaseSim', 'BasicSim']
 
 
 # %%

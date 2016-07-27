@@ -4,7 +4,7 @@ Created on Wed Jul 25 11:11:57 2016
 
 @author: bfilippo
 """
-
+from __future__ import absolute_import
 import os
 import numpy as np
 # from pymh.param.parameters import \
@@ -15,15 +15,17 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import gridspec
 
+__all__ = ['plot', 'animate']
+
 
 # %%
 def plot(fn,
          inprefix='model_full', inpath=os.curdir,
          outprefix='model_ibc', outpath=os.curdir,
          ext='.su', isSU=True, endian='Little',
-         clip=1e4, aspect='auto', cmap='seismic',
+         clip=1e3, aspect='auto', cmap='seismic',
          interpolation='bicubic', title=None,
-         colorbar=True, style='gather'):
+         colorbar=True, style='shot_gather'):
 
     """ Create a plot """
 
@@ -51,7 +53,7 @@ def plot(fn,
     )
 
     # Set style-specific attributes
-    if style == 'shotgather':
+    if style == 'shot_gather':
         clipmin = -clip
         clipmax = +clip
         ax.xaxis.set_label_text('Horizontal location [m]')
@@ -71,7 +73,7 @@ def plot(fn,
         else:
             ax.set_title(title)
         cb_label = 'Amplitude'
-    elif style == 'volumeboundary':
+    elif style == 'sub_volume_boundary':
         clipmin = -clip
         clipmax = +clip
         ax.xaxis.set_label_text('Horizontal location [m]')
@@ -129,7 +131,7 @@ def plot(fn,
 def animate(full, ibc, diff,
             clip=1e3, aspect='auto', cmap='seismic', blit=False,
             interval=10, interpolation='bilinear', title=None,
-            colorbar=True, style='gather'):
+            colorbar=True, style='shot_gather'):
 
     """ Create a plot """
     pause = False

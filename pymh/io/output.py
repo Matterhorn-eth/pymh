@@ -5,6 +5,7 @@ Created on Wed Jul 20 11:11:57 2016
 @author: bfilippo
 """
 
+from __future__ import absolute_import
 import os
 import io
 import numpy as np
@@ -14,6 +15,8 @@ from pymh.param.parameters import \
 import pymh.vis.vis as vis
 from pymh.utils.segyread_new import \
     SEGYFile
+
+__all__ = ['ShotGather', 'Slice', 'SubVolumeBoundary']
 
 
 # %%
@@ -32,7 +35,7 @@ class ShotGather(BaseOutput):
 
     """
 
-    type = 'shotgather'
+    type = 'shot_gather'
 
     def __init__(self, fn, endian='Little', isSU=True, ext='',
                  inpath=os.curdir):
@@ -41,12 +44,25 @@ class ShotGather(BaseOutput):
         del(data)
 
 
-class VolumeBoundary(BaseOutput):
-    """ Class for describing volume boundaries in `Matterhorn`.
+class Slice(BaseOutput):
+    """ Class for describing slices in `Matterhorn`.
 
     """
 
-    type = 'volumeboundary'
+    type = 'slice'
+
+    def __init__(self, fn, endian='Little', isSU=True, ext='',
+                 inpath=os.curdir):
+        data = SEGYFile('/'.join([inpath, fn + ext]), isSU=isSU, endian=endian)
+        self.data = data[:]
+        del(data)
+
+class SubVolumeBoundary(BaseOutput):
+    """ Class for describing sub volume boundaries in `Matterhorn`.
+
+    """
+
+    type = 'sub_volume_boundary'
 
     def __init__(self, fn, nt=1000, endian='Little', isSU=True, ext='',
                  inpath=os.curdir):

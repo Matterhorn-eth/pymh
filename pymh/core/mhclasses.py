@@ -5,6 +5,7 @@ Created on Wed Jul 25 11:11:57 2016
 @author: bfilippo
 """
 
+from __future__ import absolute_import
 import os
 import io
 import numpy as np
