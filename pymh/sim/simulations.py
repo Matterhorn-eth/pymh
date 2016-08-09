@@ -165,7 +165,7 @@ class IBCSim(BaseSim):
                                      source_inside,
                                      ibc_type)
 
-        if not self.extrap:
+        if self.extrap:
             self.ibc_extrap_mono_fn = 'ibc_extrap_sxx'
             self.parameters['Output'].append(OutputParam('sub_volume_boundary',
                                           receiver_locations=[locations_fn],
