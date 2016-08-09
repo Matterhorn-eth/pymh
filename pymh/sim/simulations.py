@@ -7,8 +7,10 @@ Created on Fri Jul  8 16:14:19 2016
 
 from __future__ import absolute_import
 import os
+from pymh.param.dictionaries import *
+from pymh.param.parameters import OutputParam
 
-__all__ = ['BaseSim', 'BasicSim']
+__all__ = ['BaseSim', 'BasicSim', 'FullSim']
 
 
 # %%
@@ -25,12 +27,12 @@ class BaseSim(object):
 
         self.file = open('/'.join([path, filename]), 'w')
 
-        for param in self.parameters:
+        for param in self.tuple:
             try:
-                for i in param:
+                for i in self.parameters[param]:
                     i.write(self.file)
             except:
-                param.write(self.file)
+                self.parameters[param].write(self.file)
 
         self.file.close()
 
@@ -79,3 +81,56 @@ class BasicSim(BaseSim):
         self.parameters = args
 #        for key in kwargs:
 #            self.parameters.update(kwargs)
+
+
+class FullSim(BaseSim):
+    """ Class for describing full simulations in `Matterhorn`.
+
+    """
+
+    type = 'full'
+
+    def __init__(self,
+                 Param,
+                 extrap=False,
+                 source_inside=True,
+                 ibc_type='freesurface',
+                 locations_fn='sinj_locations.txt',
+                 *args):
+        self.tuple = fullsimtuple
+        self.parameters = {}
+        for i in range(len(self.tuple)):
+            self.parameters[self.tuple[i]] = Param[i]
+#        for key in kwargs:
+#            self.parameters.update(kwargs)
+        self.extrap = extrap
+        self.source_inside = source_inside
+        self.ibc_type = ibc_type
+
+        if not self.source_inside:
+            self.injection_mono_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*self.parameters['Input'].parameters['location'])
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.injection_mono_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['S00XX'],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+            self.injection_di_fn = 'injection_vn_x_{}_y_{}_z_{}'.format(*self.parameters['Input'].parameters['location'])
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.injection_di_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['normal_velocity'],
+                                          stagger_on_sub_volume=[True],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+            if self.ibc_type is 'freesurface':
+                self.injection_mono_staggered_fn = 'injection_sxx_staggered_x_{}_y_{}_z_{}'.format(*self.parameters['Input'].parameters['location'])
+                self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                              receiver_locations=[locations_fn],
+                                              filename_prefix=[self.injection_mono_staggered_fn],
+                                              boundary_thickness=[1],
+                                              attribute=['S00XX'],
+                                              stagger_on_sub_volume=[True],
+                                              end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
