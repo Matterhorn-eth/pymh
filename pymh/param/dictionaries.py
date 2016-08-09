@@ -188,3 +188,14 @@ injectionsimdict = {
     6: 'Output'}
 
 injectionsimtuple = tuple(injectionsimdict.values())
+
+gfsimdict = {
+    0: 'Grid',
+    1: 'Decomposition',
+    2: 'Time',
+    3: 'Model',
+    4: 'Simulation',
+    5: 'Input',
+    6: 'Output'}
+
+gfsimtuple = tuple(gfsimdict.values())

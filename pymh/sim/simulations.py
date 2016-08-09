@@ -10,7 +10,7 @@ import os
 from pymh.param.dictionaries import *
 from pymh.param.parameters import OutputParam
 
-__all__ = ['BaseSim', 'BasicSim', 'FullSim', 'IBCSim']
+__all__ = ['BaseSim', 'BasicSim', 'FullSim', 'IBCSim', 'InjectionSim', 'GFsim']
 
 
 # %%
@@ -178,6 +178,84 @@ class IBCSim(BaseSim):
             self.parameters['Output'].append(OutputParam('sub_volume_boundary',
                                           receiver_locations=[locations_fn],
                                           filename_prefix=[self.ibc_extrap_di_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['normal_velocity'],
+                                          stagger_on_sub_volume=[True],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+class InjectionSim(BaseSim):
+    """ Class for describing injection simulations in `Matterhorn`.
+
+    """
+
+    type = 'injection'
+
+    def __init__(self,
+                 Param,
+                 extrap=False,
+                 source_inside=True,
+                 ibc_type='freesurface',
+                 locations_fn='srec_locations.txt',
+                 *args):
+
+        super(InjectionSim, self).__init__(injectionsimtuple,
+                                     Param,
+                                     extrap,
+                                     source_inside,
+                                     ibc_type)
+
+        if self.extrap:
+            self.inj_extrap_mono_fn = 'inj_extrap_sxx'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.inj_extrap_mono_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['S00XX'],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+            self.inj_extrap_di_fn = 'inj_extrap_vn'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.inj_extrap_di_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['normal_velocity'],
+                                          stagger_on_sub_volume=[True],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+class GFSim(BaseSim):
+    """ Class for describing Green's function simulations in `Matterhorn`.
+
+    """
+
+    type = 'GF'
+
+    def __init__(self,
+                 Param,
+                 extrap=False,
+                 source_inside=True,
+                 ibc_type='freesurface',
+                 locations_fn='srec_locations.txt',
+                 *args):
+
+        super(GFSim, self).__init__(gfsimtuple,
+                                     Param,
+                                     extrap,
+                                     source_inside,
+                                     ibc_type)
+
+        if self.extrap:
+            self.inj_extrap_mono_fn = 'inj_extrap_sxx'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.inj_extrap_mono_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['S00XX'],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+            self.inj_extrap_di_fn = 'inj_extrap_vn'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.inj_extrap_di_fn],
                                           boundary_thickness=[1],
                                           attribute=['normal_velocity'],
                                           stagger_on_sub_volume=[True],
