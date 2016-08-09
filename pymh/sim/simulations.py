@@ -143,3 +143,42 @@ class FullSim(BaseSim):
                                               attribute=['S00XX'],
                                               stagger_on_sub_volume=[True],
                                               end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+class IBCSim(BaseSim):
+    """ Class for describing IBC simulations in `Matterhorn`.
+
+    """
+
+    type = 'IBC'
+
+    def __init__(self,
+                 Param,
+                 extrap=False,
+                 source_inside=True,
+                 ibc_type='freesurface',
+                 locations_fn='srec_locations.txt',
+                 *args):
+
+        super(IBCSim, self).__init__(ibcsimtuple,
+                                     Param,
+                                     extrap,
+                                     source_inside,
+                                     ibc_type)
+
+        if not self.extrap:
+            self.ibc_extrap_mono_fn = 'ibc_extrap_sxx'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.ibc_extrap_mono_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['S00XX'],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+
+            self.ibc_extrap_di_fn = 'ibc_extrap_vn'
+            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
+                                          receiver_locations=[locations_fn],
+                                          filename_prefix=[self.ibc_extrap_di_fn],
+                                          boundary_thickness=[1],
+                                          attribute=['normal_velocity'],
+                                          stagger_on_sub_volume=[True],
+                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
