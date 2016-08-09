@@ -10,7 +10,7 @@ import os
 from pymh.param.dictionaries import *
 from pymh.param.parameters import OutputParam
 
-__all__ = ['BaseSim', 'BasicSim', 'FullSim', 'IBCSim', 'InjectionSim', 'GFsim']
+__all__ = ['BaseSim', 'BasicSim', 'FullSim', 'IBCSim', 'InjectionSim', 'GFSim']
 
 
 # %%
