@@ -19,8 +19,20 @@ class BaseSim(object):
 
     type = None
 
-    # def __init__(self):
-    # self.dim = len(configs)
+    def __init__(self,
+                 simtuple,
+                 Param,
+                 extrap,
+                 source_inside,
+                 ibc_type):
+
+        self.parameters = {}
+        self.tuple = simtuple
+        for i in range(len(self.tuple)):
+            self.parameters[self.tuple[i]] = Param[i]
+        self.extrap = extrap
+        self.source_inside = source_inside
+        self.ibc_type = ibc_type
 
     def create(self, filename, path=os.curdir):
         """ Create simulation file """
@@ -97,15 +109,12 @@ class FullSim(BaseSim):
                  ibc_type='freesurface',
                  locations_fn='sinj_locations.txt',
                  *args):
-        self.tuple = fullsimtuple
-        self.parameters = {}
-        for i in range(len(self.tuple)):
-            self.parameters[self.tuple[i]] = Param[i]
-#        for key in kwargs:
-#            self.parameters.update(kwargs)
-        self.extrap = extrap
-        self.source_inside = source_inside
-        self.ibc_type = ibc_type
+
+        super(FullSim, self).__init__(fullsimtuple,
+                                      Param,
+                                      extrap,
+                                      source_inside,
+                                      ibc_type)
 
         if not self.source_inside:
             self.injection_mono_fn = 'injection_sxx_x_{}_y_{}_z_{}'.format(*self.parameters['Input'].parameters['location'])

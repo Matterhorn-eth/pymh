@@ -165,3 +165,26 @@ fullsimdict = {
     6: 'Output'}
 
 fullsimtuple = tuple(fullsimdict.values())
+
+ibcsimdict = {
+    0: 'Grid',
+    1: 'Decomposition',
+    2: 'Time',
+    3: 'Model',
+    4: 'Simulation',
+    5: 'IBC',
+    6: 'InpOrInj',
+    7: 'Output'}
+
+ibcsimtuple = tuple(ibcsimdict.values())
+
+injectionsimdict = {
+    0: 'Grid',
+    1: 'Decomposition',
+    2: 'Time',
+    3: 'Model',
+    4: 'Simulation',
+    5: 'Injection',
+    6: 'Output'}
+
+injectionsimtuple = tuple(injectionsimdict.values())
