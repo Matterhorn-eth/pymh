@@ -235,6 +235,7 @@ class GFSim(BaseSim):
                  source_inside=True,
                  ibc_type='freesurface',
                  locations_fn='srec_locations.txt',
+                 extrap_prefix='GF_extrap.su',
                  *args):
 
         super(GFSim, self).__init__(gfsimtuple,
@@ -244,19 +245,5 @@ class GFSim(BaseSim):
                                      ibc_type)
 
         if self.extrap:
-            self.inj_extrap_mono_fn = 'inj_extrap_sxx'
-            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
-                                          receiver_locations=[locations_fn],
-                                          filename_prefix=[self.inj_extrap_mono_fn],
-                                          boundary_thickness=[1],
-                                          attribute=['S00XX'],
-                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))
+            self.parameters['Output'][1].parameters['filename_prefix'] = extrap_prefix
 
-            self.inj_extrap_di_fn = 'inj_extrap_vn'
-            self.parameters['Output'].append(OutputParam('sub_volume_boundary',
-                                          receiver_locations=[locations_fn],
-                                          filename_prefix=[self.inj_extrap_di_fn],
-                                          boundary_thickness=[1],
-                                          attribute=['normal_velocity'],
-                                          stagger_on_sub_volume=[True],
-                                          end_timestep=[self.parameters['Time'].parameters['number_of_timesteps'][0] - 1]))

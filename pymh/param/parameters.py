@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+import copy
 
 __all__ = ['GridParam', 'TimeParam', 'DecompositionParam', 'ModelParam',
            'SimulationParam', 'IBCParam', 'InjectionParam', 'BCParam',
@@ -320,7 +321,7 @@ class OutputParam(BaseParam):
     type = 'output'
 
     def __init__(self, output, **kwargs):
-        self.parameters = outputdict.copy()
+        self.parameters = copy.deepcopy(outputdict)
         self.output = output
         self.parameters['type'] = [self.output]
         if self.output is 'shot_gather':

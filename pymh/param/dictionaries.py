@@ -155,6 +155,14 @@ outputdict = {
 
 # %%
 
+facedict = {0: (('mono', 'isotropic_stress_source', 'mono'), ('x_di', 'x_source', 'di')),
+            1: (('mono', 'isotropic_stress_source', 'mono'), ('x_di', 'x_source', 'di')),
+            2: (('mono', 'isotropic_stress_source', 'mono'), ('z_di', 'z_source', 'di')),
+            3: (('mono', 'isotropic_stress_source', 'mono'), ('z_di', 'z_source', 'di'))
+            }
+
+# %%
+
 fullsimdict = {
     0: 'Grid',
     1: 'Decomposition',
