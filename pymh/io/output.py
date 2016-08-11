@@ -82,14 +82,15 @@ class SubVolumeBoundary(BaseOutput):
 def loadsnap(FullGrid=GridParam, SmallGrid=GridParam,
              SmallOutput=OutputParam, Dir=DirParam,
              inprefix='output', inpath=os.curdir, small_type='ibc',
-             ext='.su', ispadding=False, isSU=True):
+             ext='.su', ispadding=False, isSU=True, nsnaps=None):
 
     """ Load full and IBC/Injection snapshots """
 
     start = SmallOutput.parameters['start_timestep'][0]
     step = SmallOutput.parameters['timestep_increment'][0]
     end = SmallOutput.parameters['end_timestep'][0]
-    nsnaps = range(start, end ,step)
+    if not nsnaps:
+        nsnaps = range(start, end, step)
 
     # Full
     ncells_full = np.array(FullGrid.parameters['number_of_cells'], dtype=np.int32)
