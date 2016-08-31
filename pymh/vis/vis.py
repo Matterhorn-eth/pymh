@@ -131,7 +131,7 @@ def plot(fn,
 def animate(full, ibc, diff,
             clip=1e3, aspect='auto', cmap='seismic', blit=False,
             interval=10, interpolation='bilinear', title=None,
-            colorbar=True, style='shot_gather'):
+            colorbar=True, style='shot_gather', extent=[0, 1, 1, 0]):
 
     """ Create a plot """
     pause = False
@@ -141,7 +141,7 @@ def animate(full, ibc, diff,
 #        pause ^= True
 
     def isnap():
-        t_max = full.shape[2]
+        t_max = full.shape[2]-1
         dt = 1
         t = 1
         while t < t_max:
@@ -156,11 +156,11 @@ def animate(full, ibc, diff,
             im1.set_array(ibc[:, :, i].T)
             im2.set_array(diff[:, :, i].T)
             # ax = fig.colorbar(im)
-            title.set_text('{0:4}'.format(i))
+#            ax0.title.set_text('Full (snapshot #{0:4})'.format(i))
             return im0, im1, im2,
 
     lol = 1
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 8), facecolor='w', edgecolor='k')
 
     # lim = [-clip, clip]
 
@@ -171,23 +171,84 @@ def animate(full, ibc, diff,
         'aspect': aspect,
         'cmap': cmap,
         'interpolation': interpolation,
-        'animated': True
+        'animated': True,
+        'extent': extent
     }
 
     gs = gridspec.GridSpec(3, 1)
     ax0 = fig.add_subplot(gs[0, 0])
-    title = plt.title('{0:4}'.format(0))
+#    title0 = ax0.title.set_text('Full (snapshot #{0:4})'.format(0))
+    # Remove the ugly ticks
+    plt.tick_params(
+        which='both',      # both major and minor ticks are affected
+        bottom='off',      # ticks along the bottom edge are off
+        top='off',        # ticks along the top edge are off
+        left='off',        # ticks along the top edge are off
+        right='off'        # ticks along the top edge are off
+    )
     ax1 = fig.add_subplot(gs[1, 0])
+#    title1 = ax1.title.set_text('IBC')
+    # Remove the ugly ticks
+    plt.tick_params(
+        which='both',      # both major and minor ticks are affected
+        bottom='off',      # ticks along the bottom edge are off
+        top='off',        # ticks along the top edge are off
+        left='off',        # ticks along the top edge are off
+        right='off'        # ticks along the top edge are off
+    )
     ax2 = fig.add_subplot(gs[2, 0])
+#    title2 = ax2.title.set_text('Full - IBC')
+    # Remove the ugly ticks
+    plt.tick_params(
+        which='both',      # both major and minor ticks are affected
+        bottom='off',      # ticks along the bottom edge are off
+        top='off',        # ticks along the top edge are off
+        left='off',        # ticks along the top edge are off
+        right='off'        # ticks along the top edge are off
+    )
     i = 0
     im0 = ax0.imshow(full[:, :, i].T, **plotopts)
     im1 = ax1.imshow(ibc[:, :, i].T, **plotopts)
     im2 = ax2.imshow(diff[:, :, i].T, **plotopts)
 
+#    ax0.xaxis.set_label_text('Horizontal location [m]')
+    ax0.yaxis.set_label_text('Depth [m]')
+#    ax1.xaxis.set_label_text('Horizontal location [m]')
+    ax0.get_xaxis().set_ticks([])
+    ax1.yaxis.set_label_text('Depth [m]')
+    ax1.get_xaxis().set_ticks([])
+    ax2.xaxis.set_label_text('Horizontal location [m]')
+    ax2.yaxis.set_label_text('Depth [m]')
+
+    # Annotate subplots
+    ax0.annotate('Full', xy=(200, 500), xycoords='data',
+                size=15,
+                bbox=dict(boxstyle='round,pad=.3', fc='white', ec='black')
+                )
+    ax1.annotate('IBC', xy=(200, 500), xycoords='data',
+                size=15,
+                bbox=dict(boxstyle='round,pad=.3', fc='white', ec='black')
+                )
+    ax2.annotate('Full - IBC', xy=(200, 500), xycoords='data',
+                size=15,
+                bbox=dict(boxstyle='round,pad=.3', fc='white', ec='black')
+                )
+
+    fig.tight_layout()
+
 #    fig.canvas.mpl_connect('button_press_event', onClick)
     ani = animation.FuncAnimation(fig, snapshots, isnap,
                                   fargs=(lol, full, ibc, diff),
-                                  blit=blit, interval=interval, repeat=True)
+                                  blit=blit, interval=interval, repeat=False)
+
+    metadata = dict(title='Movie Test', artist='EEG',
+                    comment='Testing!')
+    writer = animation.writers['ffmpeg'](fps=10, bitrate=8000, metadata=metadata)
+    ani.save('demo_8000k_200c.avi', writer=writer, dpi=200) #, extra_args=['-b:v', '4000k', '-bufsize', '4000k'])
+#    with animation.MovieWriter.saving('myfile.mp4'):
+#        animation.MovieWriter.grab_frame()
+
+
     plt.show()
 
     return ani
