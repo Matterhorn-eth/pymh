@@ -14,6 +14,7 @@ from pymh.utils.segyread_new import \
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import gridspec
+from mpldatacursor import datacursor
 
 __all__ = ['plot', 'animate']
 
@@ -25,7 +26,9 @@ def plot(fn,
          ext='.su', isSU=True, endian='Little',
          clip=1e3, aspect='auto', cmap='seismic',
          interpolation='bicubic', title=None,
-         colorbar=True, style='shot_gather'):
+         colorbar=True, style='shot_gather',
+		 extent=[0, 1, 1, 0],
+		 figsize=(10, 8)):
 
     """ Create a plot """
 
@@ -37,7 +40,7 @@ def plot(fn,
     else:
         raise TypeError('LOL!')
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize, facecolor='w', edgecolor='k')
     gs = gridspec.GridSpec(1, 1)
     ax = fig.add_subplot(gs[0, 0])
     # ax.spines['right'].set_color('none')
@@ -86,7 +89,9 @@ def plot(fn,
     elif style == 'velocity':
         clipmin = data.min()
         clipmax = data.max()
-        ax.xaxis.set_label_text('Horizontal location [m]')
+        #ax.xaxis.set_label_text('Horizontal location [m]')
+        ax.xaxis.set_label_text('Inline [m]')
+        #ax.yaxis.set_label_text('Crossline [m]')
         ax.yaxis.set_label_text('Depth [m]')
         if title is None:
             ax.set_title('Velocity')
@@ -111,11 +116,12 @@ def plot(fn,
         'vmax': clipmax,
         'aspect': aspect,
         'cmap': cmap,
-        'interpolation': interpolation
+        'interpolation': interpolation,
+		'extent': extent
     }
 
     # Create image
-    im = ax.imshow(data.T, **plotopts)
+    im = ax.imshow(data.T, picker=True, **plotopts)
 
     # Colorbar
     if colorbar:
@@ -123,15 +129,26 @@ def plot(fn,
         cbax.set_ticks(range(int(clipmin+1), int(clipmax+1), int((clipmax-clipmin)/5)))
         cbax.set_label(cb_label)
 
+
+    datacursor(display='single')
+
+    fig.canvas.mpl_connect('pick_event', onclick)
+	#fig.canvas.mpl_connect('button_press_event', onclick)
+
     plt.show()
 
     return ax
 
+def onclick(event):
+    #if event.xdata != None and event.ydata != None:
+    #print(event.xdata, event.ydata)
+    print((event.mouseevent.xdata))
 
 def animate(full, ibc, diff,
             clip=1e3, aspect='auto', cmap='seismic', blit=False,
             interval=10, interpolation='bilinear', title=None,
-            colorbar=True, style='shot_gather', extent=[0, 1, 1, 0]):
+            colorbar=True, style='shot_gather', extent=[0, 1, 1, 0],
+			figsize=(10, 8)):
 
     """ Create a plot """
     pause = False
@@ -160,7 +177,7 @@ def animate(full, ibc, diff,
             return im0, im1, im2,
 
     lol = 1
-    fig = plt.figure(figsize=(10, 8), facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=figsize, facecolor='w', edgecolor='k')
 
     # lim = [-clip, clip]
 
