@@ -16,7 +16,7 @@ import pymh.vis.vis as vis
 from pymh.utils.segyread_new import \
     SEGYFile
 
-__all__ = ['ShotGather', 'Slice', 'SubVolumeBoundary', 'loadsnap']
+__all__ = ['ShotGather', 'Slice', 'SubVolumeBoundary', 'loadsnap', 'loadsnap3']
 
 
 # %%
@@ -79,7 +79,31 @@ class SubVolumeBoundary(BaseOutput):
 
 
 # %%
-def loadsnap(FullGrid=GridParam, SmallGrid=GridParam,
+def loadsnap(FullGrid=GridParam, FullOutput=OutputParam, Dir=DirParam,
+             inprefix='output', inpath=os.curdir,
+             ext='.su', ispadding=False, isSU=True, nsnaps=None):
+
+    """ Load full snapshots """
+
+    start = FullOutput.parameters['start_timestep'][0]
+    step = FullOutput.parameters['timestep_increment'][0]
+    end = FullOutput.parameters['end_timestep'][0]
+    if not nsnaps:
+        nsnaps = range(start, end, step)
+
+    # Full
+    ncells_full = np.array(FullGrid.parameters['number_of_cells'], dtype=np.int32)
+
+    # Initialize arrays
+    full = np.zeros((ncells_full[0], ncells_full[2], len(nsnaps)))
+
+    for i, isnap in enumerate(nsnaps):
+        full[:, :, i] = SEGYFile('/'.join([Dir.parameters['ref'], inprefix + '_{:0>8}'.format(isnap) + ext]), isSU=True, verbose=False, endian='Little')[:]
+
+    return full
+
+# %%
+def loadsnap3(FullGrid=GridParam, SmallGrid=GridParam,
              SmallOutput=OutputParam, Dir=DirParam,
              inprefix='output', inpath=os.curdir, small_type='ibc',
              ext='.su', ispadding=False, isSU=True, nsnaps=None):

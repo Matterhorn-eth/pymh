@@ -16,7 +16,7 @@ import matplotlib.animation as animation
 from matplotlib import gridspec
 from mpldatacursor import datacursor
 
-__all__ = ['plot', 'animate']
+__all__ = ['plot', 'animate', 'animate3']
 
 
 # %%
@@ -144,7 +144,97 @@ def onclick(event):
     #print(event.xdata, event.ydata)
     print((event.mouseevent.xdata))
 
-def animate(full, ibc, diff,
+def animate(full,
+            clip=1e3, aspect='auto', cmap='seismic', blit=False,
+            interval=10, interpolation='bilinear', title=None,
+            colorbar=True, style='shot_gather', extent=[0, 1, 1, 0],
+			figsize=(15, 8)):
+
+    """ Create a plot """
+    pause = False
+
+#    def onClick(event):
+#        global pause
+#        pause ^= True
+
+    def isnap():
+        t_max = full.shape[2]-1
+        dt = 1
+        t = 1
+        while t < t_max:
+            if not pause:
+                t = t + dt
+            yield t
+
+    def snapshots(i, lol, full):
+        # return ibc[:, :, i]
+        if not pause:
+            im0.set_array(full[:, :, i].T)
+            # ax = fig.colorbar(im)
+#            ax0.title.set_text('Full (snapshot #{0:4})'.format(i))
+            return im0,
+
+    lol = 1
+    fig = plt.figure(figsize=figsize, facecolor='w', edgecolor='k')
+
+    # lim = [-clip, clip]
+
+    # Plot options
+    plotopts = {
+        'vmin': -clip,
+        'vmax': +clip,
+        'aspect': aspect,
+        'cmap': cmap,
+        'interpolation': interpolation,
+        'animated': True,
+        'extent': extent
+    }
+
+    gs = gridspec.GridSpec(1, 1)
+    ax0 = fig.add_subplot(gs[0, 0])
+#    title0 = ax0.title.set_text('Full (snapshot #{0:4})'.format(0))
+    # Remove the ugly ticks
+    plt.tick_params(
+        which='both',      # both major and minor ticks are affected
+        bottom='off',      # ticks along the bottom edge are off
+        top='off',        # ticks along the top edge are off
+        left='off',        # ticks along the top edge are off
+        right='off'        # ticks along the top edge are off
+    )
+    i = 0
+    im0 = ax0.imshow(full[:, :, i].T, **plotopts)
+
+    ax0.xaxis.set_label_text('Horizontal location [m]')
+    ax0.yaxis.set_label_text('Depth [m]')
+#    ax0.get_xaxis().set_ticks([])
+
+    # Annotate subplots
+    ax0.annotate('Full', xy=(200, 500), xycoords='data',
+                size=15,
+                bbox=dict(boxstyle='round,pad=.3', fc='white', ec='black')
+                )
+
+    fig.tight_layout()
+
+#    fig.canvas.mpl_connect('button_press_event', onClick)
+    ani = animation.FuncAnimation(fig, snapshots, isnap,
+                                  fargs=(lol, full),
+                                  blit=blit, interval=interval, repeat=False)
+
+    metadata = dict(title='Movie Test', artist='EEG',
+                    comment='Testing!')
+    writer = animation.writers['ffmpeg'](fps=10, bitrate=8000, metadata=metadata)
+#    ani.save('demo_8000k_200c.avi', writer=writer, dpi=200) #, extra_args=['-b:v', '4000k', '-bufsize', '4000k'])
+#    with animation.MovieWriter.saving('myfile.mp4'):
+#        animation.MovieWriter.grab_frame()
+
+
+    plt.show()
+
+    return ani
+
+
+def animate3(full, ibc, diff,
             clip=1e3, aspect='auto', cmap='seismic', blit=False,
             interval=10, interpolation='bilinear', title=None,
             colorbar=True, style='shot_gather', extent=[0, 1, 1, 0],
@@ -261,7 +351,7 @@ def animate(full, ibc, diff,
     metadata = dict(title='Movie Test', artist='EEG',
                     comment='Testing!')
     writer = animation.writers['ffmpeg'](fps=10, bitrate=8000, metadata=metadata)
-    ani.save('demo_8000k_200c.avi', writer=writer, dpi=200) #, extra_args=['-b:v', '4000k', '-bufsize', '4000k'])
+#    ani.save('demo_8000k_200c.avi', writer=writer, dpi=200) #, extra_args=['-b:v', '4000k', '-bufsize', '4000k'])
 #    with animation.MovieWriter.saving('myfile.mp4'):
 #        animation.MovieWriter.grab_frame()
 
